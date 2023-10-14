@@ -1,42 +1,113 @@
-class GroceryStore:
-    def __init__(self):
-        self.inventory = {}
-        self.shopping_list = {}
+import <link>pygame</link>
+import random
 
-    def add_item_to_inventory(self, item_name, quantity, price):
-        self.inventory[item_name] = {'quantity': quantity, 'price': price}
+# Initialize the game
 
-    def add_item_to_shopping_list(self, item_name, quantity):
-        if item_name in self.inventory:
-            if quantity <= self.inventory[item_name]['quantity']:
-                if item_name in self.shopping_list:
-                    self.shopping_list[item_name] += quantity
-                else:
-                    self.shopping_list[item_name] = quantity
-                self.inventory[item_name]['quantity'] -= quantity
-            else:
-                print(f"Not enough {item_name} in stock.")
-        else:
-            print(f"{item_name} not found in inventory.")
+pygame.init()
 
-    def view_inventory(self):
-        print("Inventory:")
-        for item, info in self.inventory.items():
-            print(f"{item} - Quantity: {info['quantity']}, Price: ${info['price']}")
+# Set up the game window
 
-    def view_shopping_list(self):
-        print("Shopping List:")
-        for item, quantity in self.shopping_list.items():
-            print(f"{item} - Quantity: {quantity}")
+window_width = 800
+window_height = 600
+window = pygame.display.set_mode((window_width, window_height))
+pygame.display.set_caption("Shooting Game")
 
-# Usage example
-store = GroceryStore()
-store.add_item_to_inventory("Apples", 10, 1.0)
-store.add_item_to_inventory("Bananas", 15, 0.5)
+# Set up the player
 
-store.view_inventory()
-store.add_item_to_shopping_list("Apples", 3)
-store.add_item_to_shopping_list("Bananas", 7)
+player_width = 50
+player_height = 50
+player_x = window_width // 2 - player_width // 2
+player_y = window_height - player_height - 10
+player_speed = 5
+player = pygame.Rect(player_x, player_y, player_width, player_height)
 
-store.view_inventory()
-store.view_shopping_list()
+# Set up the bullet
+
+bullet_width = 10
+bullet_height = 30
+bullet_speed = 10
+bullet = pygame.Rect(0, 0, bullet_width, bullet_height)
+bullet_state = "ready"  # ready - bullet is not currently fired, fire - bullet is currently moving
+
+# Set up the enemy
+
+enemy_width = 50
+enemy_height = 50
+enemy_speed = 2
+enemy = pygame.Rect(random.randint(0, window_width - enemy_width), 0, enemy_width, enemy_height)
+
+# Set up the game loop
+
+running = True
+clock = pygame.time.Clock()
+
+while running:
+    # Handle events
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        # Handle player movement
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                player.x -= player_speed
+            elif event.key == pygame.K_RIGHT:
+                player.x += player_speed
+
+        # Handle bullet firing
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and bullet_state == "ready":
+                bullet.x = player.x + player_width // 2 - bullet_width // 2
+                bullet.y = player.y
+                bullet_state = "fire"
+
+    # Update bullet position
+
+    if bullet_state == "fire":
+        bullet.y -= bullet_speed
+        if bullet.y <= 0:
+            bullet_state = "ready"
+
+    # Update enemy position
+
+    enemy.y += enemy_speed
+    if enemy.y > window_height:
+        enemy.x = random.randint(0, window_width - enemy_width)
+        enemy.y = 0
+
+    # Check for collision between bullet and enemy
+
+    if bullet.colliderect(enemy):
+        bullet_state = "ready"
+        enemy.x = random.randint(0, window_width - enemy_width)
+        enemy.y = 0
+
+    # Check for collision between player and enemy
+
+    if player.colliderect(enemy):
+        running = False
+
+    # Clear the screen
+
+    window.fill((0, 0, 0))
+
+    # Draw the player, bullet, and enemy
+
+    pygame.draw.rect(window, (255, 0, 0), player)
+    pygame.draw.rect(window, (0, 255, 0), bullet)
+    pygame.draw.rect(window, (0, 0, 255), enemy)
+
+    # Update the display
+
+    pygame.display.update()
+
+    # Limit the frame rate
+
+    clock.tick(60)
+
+# Quit the game
+
+pygame.quit()
